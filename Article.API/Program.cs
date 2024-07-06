@@ -51,7 +51,7 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 //configuring the identityapi
-app.MapGroup("/Identity").MapIdentityApi<User>();
+app.MapGroup("/api/Identity").MapIdentityApi<User>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
