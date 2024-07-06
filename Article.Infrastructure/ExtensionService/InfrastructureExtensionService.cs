@@ -13,7 +13,15 @@ namespace Article.Infrastructure.ExtensionService
     {
         public static async Task<IServiceCollection> AddInfrastructureDI(this IServiceCollection services, IConfiguration configuration, Assembly assembly)
         {
-            services.AddDbContext<ArticleDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnectionString")).EnableServiceProviderCaching());
+            services.AddDbContext<ArticleDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnectionString"),
+                 sqlServerOptions =>
+                 {
+                     sqlServerOptions.EnableRetryOnFailure(
+                         maxRetryCount: 5, // Number of retries
+                         maxRetryDelay: TimeSpan.FromSeconds(30), // Delay between retries
+                         errorNumbersToAdd: null // Optional error codes to retry on
+                     );
+                 }).EnableServiceProviderCaching());
 
             services.AddScoped<IDbFactory, DbFactory>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -43,9 +51,6 @@ namespace Article.Infrastructure.ExtensionService
                     await seeder.SeedData();
                 }
             }
-
-
-
             return services;
         }
 

@@ -4,10 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Article.Infrastructure.Seeds
 {
@@ -16,12 +13,14 @@ namespace Article.Infrastructure.Seeds
         private readonly ArticleDbContext _dbContext;
         private readonly IServiceProvider _serviceProvider;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<Seeder> _logger;
 
-        public Seeder(ArticleDbContext dbContext, IServiceProvider serviceProvider, IConfiguration configuration)
+        public Seeder(ArticleDbContext dbContext, IServiceProvider serviceProvider, IConfiguration configuration, ILogger<Seeder> logger)
         {
             _dbContext = dbContext;
             _serviceProvider = serviceProvider;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task SeedData()
@@ -90,18 +89,21 @@ namespace Article.Infrastructure.Seeds
                         await transaction.RollbackAsync();
                         // Log the exception
                         Console.WriteLine($"Error occurred during data seeding: {ex.Message}");
+                        _logger.LogError($"Error occurred during data seeding: {ex.Message}");
                         throw; // Rethrow the exception for higher-level handling
                     }
                 }
                 else
                 {
                     Console.WriteLine($"Cannot able to established connection to database");
+                    _logger.LogError($"Cannot able to established connection to database");
                 }
             }
             catch (Exception ex)
             {
                 // Log the exception
                 Console.WriteLine($"Error connecting to database: {ex.Message}");
+                _logger.LogError($"Error connecting to database: {ex.Message}");
                 throw; // Rethrow the exception for higher-level handling
             }
         }
