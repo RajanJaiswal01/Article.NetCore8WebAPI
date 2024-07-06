@@ -4,9 +4,9 @@ using Article.Infrastructure.Common;
 
 namespace Article.Infrastructure.Repositories
 {
-    public class PostsRepository:GenericRepository<Posts>,IPostsRepository
+    public class PostRepository:GenericRepository<Post>,IPostRepository
     {
-        public PostsRepository(IDbFactory dbFactory):base(dbFactory)
+        public PostRepository(IDbFactory dbFactory):base(dbFactory)
         {
             
         }

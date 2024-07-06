@@ -12,9 +12,9 @@ namespace Article.Infrastructure.ApplicationDbContext
         }
 
 
-        DbSet<Author> Author { get; set; }
-        DbSet<Blog> Blog { get; set; }
-        DbSet<Posts> Posts { get; set; }
+        public DbSet<Author> Author { get; set; }
+        public DbSet<Blog> Blog { get; set; }
+        public DbSet<Post> Posts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -28,7 +28,7 @@ namespace Article.Infrastructure.ApplicationDbContext
                 .WithOne(r => r.Blog)
                 .HasForeignKey(r => r.BlogId);
 
-            builder.Entity<Posts>()
+            builder.Entity<Post>()
                 .HasOne(r => r.Author)
                 .WithMany(r => r.Posts)
                 .HasForeignKey(r => r.AuthorId);

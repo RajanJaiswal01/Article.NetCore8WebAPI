@@ -2,7 +2,7 @@
 
 namespace Article.Core.Entities
 {
-    public class Posts:BaseEntity
+    public class Post:BaseEntity
     {
         public long Id { get; set; }
         public string? Title { get; set; }

@@ -3,7 +3,7 @@ using Article.Core.Entities;
 
 namespace Article.Core.IReposiories
 {
-    public interface IPostsRepository: IGenericRepositories<Posts>
+    public interface IPostRepository: IGenericRepositories<Post>
     {
     }
 }
