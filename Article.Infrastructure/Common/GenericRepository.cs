@@ -8,23 +8,24 @@ namespace Article.Infrastructure.Common
     public class GenericRepository<T>:IGenericRepositories<T> where T:class
     {
 
-        private ArticleDbContext dbContext;
-        private readonly IDbFactory _dbFactory;
+        private ArticleDbContext _dbContext;
         private readonly DbSet<T> _dbSet;
+        //private readonly IDbFactory _dbFactory;
 
        
-        protected ArticleDbContext DbContext
-        {
-            get
-            {
-                return dbContext ?? (dbContext = _dbFactory.Init());
-            }
-        }
+        //protected ArticleDbContext DbContext
+        //{
+        //    get
+        //    {
+        //        return dbContext ?? (dbContext = _dbFactory.Init());
+        //    }
+        //}
 
-        public GenericRepository(IDbFactory dbFactory)
+        public GenericRepository(ArticleDbContext dbContext)
         {
-            _dbFactory = dbFactory ?? throw new ArgumentNullException(nameof(dbFactory));
-            _dbSet = DbContext.Set<T>();
+            //_dbFactory = dbFactory ?? throw new ArgumentNullException(nameof(dbFactory));
+            _dbContext = dbContext;
+            _dbSet = _dbContext.Set<T>();
         }
 
 
@@ -62,7 +63,7 @@ namespace Article.Infrastructure.Common
         public async Task Update(T entity)
         {
             _dbSet.Attach(entity);
-            DbContext.Entry(entity).State = EntityState.Modified;
+            _dbContext.Entry(entity).State = EntityState.Modified;
             //await DbContext.SaveChangesAsync();
         }
 

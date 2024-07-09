@@ -7,7 +7,7 @@ namespace Article.Infrastructure.Repositories
 {
     public class AuthorRepository:GenericRepository<Author>, IAuthorRepository
     {
-        public AuthorRepository(IDbFactory dbFactory):base(dbFactory)
+        public AuthorRepository(ArticleDbContext dbContext):base(dbContext)
         {
             
         }

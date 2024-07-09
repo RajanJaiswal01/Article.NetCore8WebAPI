@@ -41,7 +41,7 @@ namespace Article.Application.Blog.Command.Create
             {
                 var data = _mapper.Map<Article.Core.Entities.Blog>(request);
                 await _blogRepository.Add(data);
-                await _unitOfWork.Commit();
+                await _unitOfWork.CommitAsync();
                 if (data.Id == 0)
                 {
                     response.IsError = true;
