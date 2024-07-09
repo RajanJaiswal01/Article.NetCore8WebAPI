@@ -1,4 +1,5 @@
 ﻿using Article.Application.Blog.Command.Create;
+using Article.Application.Blog.Command.Update;
 using Article.Application.Blog.Query.GetAll;
 using Article.Application.Blog.Query.GetById;
 using MediatR;
@@ -52,6 +53,27 @@ namespace Article.API.Controllers
         [HttpPost]
         [Route("Create")]
         public async Task<IActionResult> Create(CreateCommand model)
+        {
+            var data = await _mediator.Send(model);
+            if (data.IsError)
+            {
+                if (data.ErrorsList.Any())
+                {
+                    return BadRequest(data);
+                }
+                else
+                {
+                    return NotFound(data);
+                }
+            }
+
+            return Ok(data);
+        }
+
+
+        [HttpPost]
+        [Route("Update")]
+        public async Task<IActionResult> Update(UpdateCommand model)
         {
             var data = await _mediator.Send(model);
             if (data.IsError)

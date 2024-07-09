@@ -1,4 +1,5 @@
 ﻿using Article.Application.Blog.Command.Create;
+using Article.Application.Blog.Command.Update;
 using Article.Application.DTO;
 using AutoMapper;
 
@@ -21,6 +22,10 @@ namespace Article.Application.MapData
             .ForMember(dest => dest.Posts, opt => opt.MapFrom(src => src.Posts))
             .ReverseMap();
 
+
+            CreateMap<UpdateCommand, Article.Core.Entities.Blog>()
+            .ForMember(dest => dest.Posts, opt => opt.MapFrom(src => src.Posts))
+            .ReverseMap();
 
             //CreateMap<Article.Core.Entities.User, AuthorDTO>()
             //    .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.Address.City))
