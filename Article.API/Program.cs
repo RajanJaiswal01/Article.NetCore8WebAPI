@@ -1,8 +1,10 @@
+using Article.Application.Blog.Query.GetById;
 using Article.Application.ExtensionService;
 using Article.Application.Middleware;
 using Article.Core.Entities;
 using Article.Infrastructure.ApplicationDbContext;
 using Article.Infrastructure.ExtensionService;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Serilog;
 using System.Reflection;
@@ -27,7 +29,7 @@ builder.Services.AddIdentityApiEndpoints<User>()
     .AddDefaultTokenProviders();
 
 //Adding Extension Services
-builder.Services.AddInfrastructureDI(builder.Configuration, Assembly.GetExecutingAssembly());
+await builder.Services.AddInfrastructureDI(builder.Configuration, Assembly.GetExecutingAssembly());
 builder.Services.AddApplicationDI();
 
 
@@ -47,6 +49,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Register MediatR and specify the assemblies containing handlers
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GetByIdQueryHandler).GetTypeInfo().Assembly));
 
 var app = builder.Build();
 

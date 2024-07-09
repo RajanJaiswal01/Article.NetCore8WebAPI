@@ -1,6 +1,8 @@
 ﻿using Article.Core.Common;
+using Article.Core.IReposiories;
 using Article.Infrastructure.ApplicationDbContext;
 using Article.Infrastructure.Common;
+using Article.Infrastructure.Repositories;
 using Article.Infrastructure.Seeds;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -26,18 +28,21 @@ namespace Article.Infrastructure.ExtensionService
             services.AddScoped<IDbFactory, DbFactory>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-            var types = assembly.GetTypes()
-           .Where(t => t.IsClass && !t.IsAbstract)
-           .Select(t => new
-           {
-               Interface = t.GetInterfaces().FirstOrDefault(i => i.Name == $"I{t.Name}"),
-               Implementation = t
-           })
-           .Where(t => t.Interface != null);
+            services.AddScoped<IBlogRepository, BlogRepository>();
 
-            foreach (var type in types)
+
+            // Register all classes that implement IRepository with their interfaces
+            var repositoryTypes = assembly.GetExportedTypes()
+                .Where(t => t.GetInterfaces().Any(i => i.IsAssignableFrom(typeof(IGenericRepositories<>))))
+                .ToList();
+
+            foreach (var type in repositoryTypes)
             {
-                services.AddTransient(type.Interface, type.Implementation);
+                var interfaceType = type.GetInterfaces().FirstOrDefault(i => i != typeof(IGenericRepositories<>));
+                if (interfaceType != null)
+                {
+                    services.AddScoped(interfaceType, type);
+                }
             }
 
             services.AddScoped<Seeder>();

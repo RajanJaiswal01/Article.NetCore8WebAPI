@@ -37,7 +37,7 @@ namespace Article.Application.Middleware
                 };
 
                 var jsonResponse = JsonSerializer.Serialize(response);
-                context.Response.WriteAsync(jsonResponse);
+                await context.Response.WriteAsync(jsonResponse);
                 return;
             }
             catch (Exception ex)
@@ -54,7 +54,7 @@ namespace Article.Application.Middleware
                 };
 
                 var jsonResponse = JsonSerializer.Serialize(response);
-                context.Response.WriteAsync(jsonResponse);
+                await context.Response.WriteAsync(jsonResponse);
                 return;
             }
         }

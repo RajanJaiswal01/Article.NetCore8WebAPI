@@ -1,6 +1,7 @@
 ﻿using Article.Core.Common;
 using Article.Infrastructure.ApplicationDbContext;
 using Article.Infrastructure.Common;
+using Microsoft.EntityFrameworkCore;
 
 public class UnitOfWork : IUnitOfWork
 {
@@ -32,9 +33,32 @@ public class UnitOfWork : IUnitOfWork
         return (IGenericRepositories<TEntity>)_repositories[type];
     }
 
-    public async Task<int> Commit()
+    //public async Task<int> Commit()
+    //{
+    //    return await _context.SaveChangesAsync();
+    //}
+
+    public async Task<long> Commit()
     {
-        return await _context.SaveChangesAsync();
+        try
+        {
+            return await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // Handle concurrency exceptions
+            throw new Exception("Concurrency exception occurred.", ex);
+        }
+        catch (DbUpdateException ex)
+        {
+            // Handle specific errors for the DbContext
+            throw new Exception("Database update exception occurred.", ex);
+        }
+        catch (Exception ex)
+        {
+            // Handle other exceptions
+            throw new Exception("An error occurred while saving changes.", ex);
+        }
     }
 
     public void Dispose()

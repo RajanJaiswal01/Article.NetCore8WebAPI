@@ -6,6 +6,7 @@ namespace Article.Core.Common
     {
         Task<IEnumerable<T>> GetAll();
         Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> predicate);
+        Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includeProperties);
         Task<T> GetById(int id);
         Task<T> GetById(long id);
         Task<T> GetById(Expression<Func<T, bool>> predicate);

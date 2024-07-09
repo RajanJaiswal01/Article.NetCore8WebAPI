@@ -7,6 +7,6 @@ namespace Article.Core.Entities
         public long Id { get; set; }
         public string? Name { get; set; }
         public string? Description { get; set; }
-        public virtual ICollection<Post> Posts { get; set; }
+        public virtual ICollection<Post>? Posts { get; set; }
     }
 }

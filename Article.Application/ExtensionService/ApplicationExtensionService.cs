@@ -1,4 +1,5 @@
-﻿using Article.Application.Middleware;
+﻿using Article.Application.MapData;
+using Article.Application.Middleware;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Article.Application.ExtensionService
@@ -9,6 +10,10 @@ namespace Article.Application.ExtensionService
         {
             // Register CustomMiddleware in the DI container
             services.AddTransient<CustomMiddleware>();
+
+            // Register AutoMapper and the assemblies containing mapping profiles
+            services.AddAutoMapper(typeof(MappingConfig).Assembly);
+
             return services;
         }
     }

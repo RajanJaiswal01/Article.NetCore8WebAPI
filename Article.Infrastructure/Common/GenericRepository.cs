@@ -10,10 +10,9 @@ namespace Article.Infrastructure.Common
 
         private ArticleDbContext dbContext;
         private readonly IDbFactory _dbFactory;
-        
-
         private readonly DbSet<T> _dbSet;
 
+       
         protected ArticleDbContext DbContext
         {
             get
@@ -24,9 +23,10 @@ namespace Article.Infrastructure.Common
 
         public GenericRepository(IDbFactory dbFactory)
         {
+            _dbFactory = dbFactory ?? throw new ArgumentNullException(nameof(dbFactory));
             _dbSet = DbContext.Set<T>();
-            _dbFactory = dbFactory;
         }
+
 
         public async Task<IEnumerable<T>> GetAll()
         {
@@ -78,6 +78,16 @@ namespace Article.Infrastructure.Common
             var entity = await _dbSet.FindAsync(id);
             _dbSet.Remove(entity);
             //await DbContext.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includeProperties)
+        {
+            IQueryable<T> query = _dbSet.Where(predicate);
+            foreach (var includeProperty in includeProperties)
+            {
+                query = query.Include(includeProperty);
+            }
+            return await query.ToListAsync();
         }
     }
 }
