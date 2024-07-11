@@ -1,77 +1,115 @@
 ﻿using Article.Core.Entities;
 using Article.Infrastructure.ApplicationDbContext;
 using Article.Infrastructure.Seeds;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Linq.Expressions;
 
-public class SeederTests
+namespace Article.Infrastructure.Tests
 {
-    private ArticleDbContext CreateContext()
+    public class SeederTests
     {
-        var connection = new SqliteConnection("DataSource=:memory:");
-        connection.Open();
+        private readonly Mock<ArticleDbContext> _mockDbContext;
+        private readonly Mock<IServiceProvider> _mockServiceProvider;
+        private readonly Mock<IConfiguration> _mockConfiguration;
+        private readonly Mock<ILogger<Seeder>> _mockLogger;
 
-        var options = new DbContextOptionsBuilder<ArticleDbContext>()
-            .UseSqlite(connection)
-            .Options;
+        public SeederTests()
+        {
+            // Mock DbContext and DbSet
+            _mockDbContext = new Mock<ArticleDbContext>(new DbContextOptions<ArticleDbContext>());
+            // Set up DbSet mocks
+            _mockDbContext.Setup(d => d.Set<User>()).Returns(MockDbSet<User>(new List<User>()));
+            _mockDbContext.Setup(d => d.Set<Author>()).Returns(MockDbSet<Author>(new List<Author>()));
+            _mockDbContext.Setup(d => d.Set<Blog>()).Returns(MockDbSet<Blog>(new List<Blog>()));
 
-        var context = new ArticleDbContext(options);
-        context.Database.EnsureDeleted(); // Ensure database is deleted
-        context.Database.EnsureCreated(); // Ensure database is created
+            // Mock ServiceProvider
+            _mockServiceProvider = new Mock<IServiceProvider>();
+            _mockServiceProvider.Setup(sp => sp.GetService(typeof(ArticleDbContext)))
+                .Returns(_mockDbContext.Object);
 
-        return context;
-    }
+            // Mock IConfiguration
+            _mockConfiguration = new Mock<IConfiguration>();
 
-    [Fact]
-    public async Task SeedData_ShouldSeedUsersAndData_WhenDatabaseIsEmpty()
-    {
-        // Arrange
-        var dbContext = CreateContext();
+            // Mock ILogger
+            _mockLogger = new Mock<ILogger<Seeder>>();
+        }
 
-        var serviceProviderMock = new Mock<IServiceProvider>();
-        var configurationMock = new Mock<IConfiguration>();
-        var loggerMock = new Mock<ILogger<Seeder>>();
+        [Fact]
+        public async Task SeedData_NoExistingData_Succeeds()
+        {
+            // Arrange
+            var seeder = new Seeder(
+                _mockDbContext.Object,
+                _mockServiceProvider.Object,
+                _mockConfiguration.Object,
+                _mockLogger.Object);
 
-        // Configure mock objects
-        configurationMock.Setup(c => c["AppSettings:SuperAdminEmail"]).Returns("admin@example.com");
-        configurationMock.Setup(c => c["AppSettings:SuperAdminPassword"]).Returns("Password123!");
+            // Mock configuration values
+            _mockConfiguration.SetupGet(c => c["AppSettings:SuperAdminEmail"]).Returns("admin@example.com");
 
-        var userManagerMock = new Mock<UserManager<User>>(
-            Mock.Of<IUserStore<User>>(), null, null, null, null, null, null, null, null);
+            // Mock DbContext methods
+            _mockDbContext.Setup(d => d.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1); // Mock SaveChangesAsync
+            _mockDbContext.Setup(d => d.Set<User>().AnyAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+            _mockDbContext.Setup(d => d.Set<Author>().AnyAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+            _mockDbContext.Setup(d => d.Set<Blog>().AnyAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
-        var roleManagerMock = new Mock<RoleManager<IdentityRole>>(
-            Mock.Of<IRoleStore<IdentityRole>>(), null, null, null, null);
+            // Act
+            await seeder.SeedData();
 
-        serviceProviderMock.Setup(sp => sp.GetService(typeof(UserManager<User>)))
-            .Returns(userManagerMock.Object);
-        serviceProviderMock.Setup(sp => sp.GetService(typeof(RoleManager<IdentityRole>)))
-            .Returns(roleManagerMock.Object);
+            // Assert
+            _mockDbContext.Verify(d => d.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            _mockDbContext.Verify(d => d.Set<User>().AddRangeAsync(It.IsAny<IEnumerable<User>>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            _mockDbContext.Verify(d => d.Set<Author>().AddAsync(It.IsAny<Author>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            _mockDbContext.Verify(d => d.Set<Blog>().AddRangeAsync(It.IsAny<IEnumerable<Blog>>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+        }
 
-        // Setup userManager and roleManager behavior
-        userManagerMock.Setup(um => um.FindByEmailAsync(It.IsAny<string>()))
-            .ReturnsAsync((User)null);
-        userManagerMock.Setup(um => um.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
-            .ReturnsAsync(IdentityResult.Success);
-        userManagerMock.Setup(um => um.AddToRoleAsync(It.IsAny<User>(), It.IsAny<string>()))
-            .ReturnsAsync(IdentityResult.Success);
+        [Fact]
+        public async Task SeedData_ExistingData_SkipsSeeding()
+        {
+            // Arrange
+            var seeder = new Seeder(
+                _mockDbContext.Object,
+                _mockServiceProvider.Object,
+                _mockConfiguration.Object,
+                _mockLogger.Object);
 
-        roleManagerMock.Setup(rm => rm.RoleExistsAsync(It.IsAny<string>()))
-            .ReturnsAsync(false);
-        roleManagerMock.Setup(rm => rm.CreateAsync(It.IsAny<IdentityRole>()))
-            .ReturnsAsync(IdentityResult.Success);
+            // Mock DbContext methods
+            _mockDbContext.Setup(d => d.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(0); // Mock SaveChangesAsync
+            _mockDbContext.Setup(d => d.Set<User>().AnyAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            _mockDbContext.Setup(d => d.Set<Author>().AnyAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
+            _mockDbContext.Setup(d => d.Set<Blog>().AnyAsync(It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-        var seeder = new Seeder(dbContext, serviceProviderMock.Object, configurationMock.Object, loggerMock.Object);
+            // Act
+            await seeder.SeedData();
 
-        // Act
-        await seeder.SeedData();
+            // Assert
+            _mockDbContext.Verify(d => d.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+            _mockDbContext.Verify(d => d.Set<User>().AddRangeAsync(It.IsAny<IEnumerable<User>>(), It.IsAny<CancellationToken>()), Times.Never);
+            _mockDbContext.Verify(d => d.Set<Author>().AddAsync(It.IsAny<Author>(), It.IsAny<CancellationToken>()), Times.Never);
+            _mockDbContext.Verify(d => d.Set<Blog>().AddRangeAsync(It.IsAny<IEnumerable<Blog>>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
 
-        // Assert
-        Assert.True(dbContext.Users.Any());
-        Assert.True(dbContext.Author.Any());
-        Assert.True(dbContext.Blog.Any());
+        // Helper method to mock DbSet<T>
+        private static DbSet<T> MockDbSet<T>(IEnumerable<T> data) where T : class
+        {
+            var queryable = data.AsQueryable();
+            var mockDbSet = new Mock<DbSet<T>>();
+            mockDbSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(queryable.Provider);
+            mockDbSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
+            mockDbSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
+            mockDbSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => queryable.GetEnumerator());
+            mockDbSet.Setup(d => d.AddAsync(It.IsAny<T>(), It.IsAny<CancellationToken>())).ReturnsAsync((T entity, CancellationToken token) =>
+            {
+                data = data.Append(entity);
+                return new EntityEntry<T>(default);
+            });
+            mockDbSet.Setup(d => d.AnyAsync(It.IsAny<Expression<Func<T, bool>>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Expression<Func<T, bool>> predicate, CancellationToken token) => data.AsQueryable().Any(predicate));
+            return mockDbSet.Object;
+        }
     }
 }

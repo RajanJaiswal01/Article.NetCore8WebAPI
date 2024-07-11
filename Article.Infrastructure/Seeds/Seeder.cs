@@ -32,71 +32,65 @@ namespace Article.Infrastructure.Seeds
                 if (await _dbContext.Database.CanConnectAsync())
                 {
                     if (_dbContext.Users.Any() && _dbContext.Author.Any() && _dbContext.Blog.Any()) return;
-                    //var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-                   // strategy.Execute(async () =>
-                   //{
-                   //    using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                    try
+                    {
 
-                       try
-                       {
+                        // Seed users if none exist
+                        if (!_dbContext.Users.Any())
+                        {
+                            await InitializeUser();
+                        }
 
-                           // Seed users if none exist
-                           if (!_dbContext.Users.Any())
-                           {
-                               await InitializeUser();
-                           }
-
-                           // Check if super admin exists and seed related data
-                           var superAdminEmail = _configuration["AppSettings:SuperAdminEmail"];
-                           var userData = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserName == superAdminEmail);
-                           var userId = userData?.Id;
+                        // Check if super admin exists and seed related data
+                        var superAdminEmail = _configuration["AppSettings:SuperAdminEmail"];
+                        var userData = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserName == superAdminEmail);
+                        var userId = userData?.Id;
 
 
-                           if (!string.IsNullOrEmpty(userId))
-                           {
-                               if (!_dbContext.Author.Any())
-                               {
-                                   Author author = new Author()
-                                   {
-                                       UserId = userId,
-                                       Category = "Cultural Author",
-                                       Designation = "Senior Author",
-                                       CreatedBy = userId,
-                                       CreatedOn = DateTime.UtcNow,
-                                       IsActive = true,
-                                       IsDeleted = false
-                                   };
-                                   await _dbContext.Author.AddAsync(author);
-                                   await _dbContext.SaveChangesAsync();
-                               }
+                        if (!string.IsNullOrEmpty(userId))
+                        {
+                            if (!_dbContext.Author.Any())
+                            {
+                                Author author = new Author()
+                                {
+                                    UserId = userId,
+                                    Category = "Cultural Author",
+                                    Designation = "Senior Author",
+                                    CreatedBy = userId,
+                                    CreatedOn = DateTime.UtcNow,
+                                    IsActive = true,
+                                    IsDeleted = false
+                                };
+                                await _dbContext.Author.AddAsync(author);
+                                await _dbContext.SaveChangesAsync();
+                            }
 
-                               if (_dbContext.Author.Any())
-                               {
-                                   if (!_dbContext.Blog.Any())
-                                   {
-                                       var author = await _dbContext.Author.FirstOrDefaultAsync(x => x.UserId == userId);
-                                       var BlogsData = SeedBlogData(userId, author.Id);
-                                       if (BlogsData.Count() > 0)
-                                       {
-                                           await _dbContext.Blog.AddRangeAsync(BlogsData);
-                                       }
-                                   }
-                               }
-                           }
+                            if (_dbContext.Author.Any())
+                            {
+                                if (!_dbContext.Blog.Any())
+                                {
+                                    var author = await _dbContext.Author.FirstOrDefaultAsync(x => x.UserId == userId);
+                                    var BlogsData = SeedBlogData(userId, author.Id);
+                                    if (BlogsData.Count() > 0)
+                                    {
+                                        await _dbContext.Blog.AddRangeAsync(BlogsData);
+                                    }
+                                }
+                            }
+                        }
 
-                           await _dbContext.SaveChangesAsync();
-                           //await transaction.CommitAsync();
-                       }
-                       catch (Exception ex)
-                       {
-                           //await transaction.RollbackAsync();
-                           // Log the exception
-                           Console.WriteLine($"Error occurred during data seeding: {ex.Message}");
-                           _logger.LogError($"Error occurred during data seeding: {ex.Message}");
-                           throw; // Rethrow the exception for higher-level handling
-                       }
-                  // });
+                        await _dbContext.SaveChangesAsync();
+                        //await transaction.CommitAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        //await transaction.RollbackAsync();
+                        // Log the exception
+                        Console.WriteLine($"Error occurred during data seeding: {ex.Message}");
+                        _logger.LogError($"Error occurred during data seeding: {ex.Message}");
+                        throw; // Rethrow the exception for higher-level handling
+                    }
                 }
                 else
                 {
