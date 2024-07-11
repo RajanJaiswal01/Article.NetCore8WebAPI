@@ -38,7 +38,7 @@ namespace Article.Application.Tests.Blog.Query.GetAll
 
             _blogRepository.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<Article.Core.Entities.Blog, bool>>>()))
                               .ReturnsAsync(blogList);
-            _mapper.Setup(x => x.Map<List<BlogDTO>>(It.IsAny<Article.Core.Entities.Blog>()> , It.IsAny<Expression<Func<Article.Core.Entities.Blog, object>>[]>)).Returns(blogListDTO.ToList());
+            _mapper.Setup(x => x.Map<List<BlogDTO>>(It.IsAny<Expression<Func<Article.Core.Entities.Blog, object>>[]>)).Returns(blogListDTO.ToList());
 
             var request = new GetAllQuery();
 
